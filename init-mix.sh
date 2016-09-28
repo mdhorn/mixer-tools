@@ -7,6 +7,7 @@ if [ -e /usr/lib/os-release ]; then
 fi
 
 ALL=0
+MIXVER=
 
 while [[ $# > 0 ]]
 do
@@ -16,8 +17,12 @@ do
         BUILDERCONF="$2"
         shift
         ;;
-        -b|--buildver)
+        -b|--clear-version)
         CLRVER="$2"
+        shift
+        ;;
+        -m|--mix-version)
+        MIXVER="$2"
         shift
         ;;
         -a|--all-bundles)
@@ -26,7 +31,8 @@ do
         -h|--help)
         echo -e "Usage: mixer-init-mix.sh\n"
         echo -e "\t-c, --config Supply specific builder.conf\n"
-        echo -e "\t-b, --buildver Supply specific Clear version to build against\n"
+        echo -e "\t-b, --clear-version Supply specific Clear version to build against\n"
+        echo -e "\t-a, --all-bundles Create a mix with all Clear bundles included\n"
         exit
         ;;
         *)
@@ -42,26 +48,30 @@ if [ -z "$CLRVER" ]; then
     exit
 fi
 
-echo -e "Creating initial update version 10\n"
+if [ -z "$MIXVER" ]; then
+    MIXVER=10
+fi
 
-mixer-init-versions.sh -m 10 -c $CLRVER
+echo -e "Creating initial update version $MIXVER\n"
 
+mixer-init-versions.sh -m $MIXVER -c $CLRVER
 mixer-update-bundles.sh
+
 if [ $ALL -eq 0 ]; then
-    echo -e "Initializing mix with bundles:\n* os-core\n* os-core-update\n"
+    echo -e "Initializing mix with bundles:\n* os-core\n* os-core-update\n* kernel-native\n* bootloader\n"
     cd mix-bundles/
     rm -rf *
-    git checkout os-core os-core-update
+    git checkout os-core os-core-update kernel-native bootloader
     git add .
     git commit -s -m "Prune bundles for starting version 10"
     cd -
-fi
-
-if [[ ! -z $BUILDERCONF ]]; then
-    mixer-build-chroots.sh -c $BUILDERCONF
-    mixer-create-update.sh -c $BUILDERCONF
 else
-    mixer-build-chroots.sh
-    mixer-create-update.sh
+    if [[ ! -z $BUILDERCONF ]]; then
+        mixer-build-chroots.sh -c $BUILDERCONF
+        mixer-create-update.sh -c $BUILDERCONF
+    else
+        mixer-build-chroots.sh
+        mixer-create-update.sh
+    fi
 fi
 # vi: ts=8 sw=4 sts=4 et tw=80
