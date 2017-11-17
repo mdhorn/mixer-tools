@@ -119,7 +119,7 @@ func (b *Builder) ReadBuilderConf() {
 		r := regexp.MustCompile(h.re)
 		for _, i := range lines {
 			if m := r.FindIndex([]byte(i)); m != nil {
-				*h.dest = i[m[1]:]
+				*h.dest = os.ExpandEnv(i[m[1]:])
 			}
 		}
 	}
