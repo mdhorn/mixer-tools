@@ -34,6 +34,7 @@ type Builder struct {
 	Versiondir  string
 	Yumconf     string
 	Yumtemplate string
+	Upstreamurl string
 
 	Signing int
 	Bump    int
@@ -111,6 +112,7 @@ func (b *Builder) ReadBuilderConf() {
 		{`^SERVER_STATE_DIR\s*=\s*`, &b.Statedir},
 		{`^VERSIONS_PATH\s*=\s*`, &b.Versiondir},
 		{`^YUM_CONF\s*=\s*`, &b.Yumconf},
+		{`^CONTENTURL\s*=\s*`, &b.Upstreamurl},
 	}
 
 	for _, h := range fields {
@@ -442,6 +444,21 @@ func (b *Builder) setVersion(publish bool) {
 	}
 
 	err = ioutil.WriteFile(b.Statedir+"/image/LAST_VER", []byte(b.Mixver), 0644)
+	if err != nil {
+		helpers.PrintError(err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Saving the upstream version URL " + b.Upstreamurl)
+	upstream_url := b.Statedir + "/www/" + b.Mixver + "/upstream_url"
+	err = ioutil.WriteFile(upstream_url, []byte(b.Upstreamurl), 0644)
+	if err != nil {
+		helpers.PrintError(err)
+		os.Exit(1)
+	}
+	fmt.Println("Saving the upstream version " + b.Clearver)
+	upstream_ver := b.Statedir + "/www/" + b.Mixver + "/upstream_ver"
+	err = ioutil.WriteFile(upstream_ver, []byte(b.Clearver), 0644)
 	if err != nil {
 		helpers.PrintError(err)
 		os.Exit(1)
